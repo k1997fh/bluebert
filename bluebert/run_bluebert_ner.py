@@ -16,7 +16,7 @@ import pickle
 import tensorflow as tf
 
 
-from bluebert.conlleval import evaluate, report_notprint
+from conlleval import evaluate, report_notprint
 from bert import modeling
 from bert import optimization
 from bert import tokenization
