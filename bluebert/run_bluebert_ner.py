@@ -13,7 +13,7 @@ import collections
 import os
 import pickle
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 from bluebert.conlleval import evaluate, report_notprint
@@ -22,7 +22,7 @@ from bert import optimization
 from bert import tokenization
 from bluebert import tf_metrics
 
-flags = tf.compat.v1.flags
+flags = tf.flags
 
 FLAGS = flags.FLAGS
 
