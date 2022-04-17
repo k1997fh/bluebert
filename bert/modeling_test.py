@@ -22,7 +22,7 @@ import random
 import re
 
 import six
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from bert import modeling
 
