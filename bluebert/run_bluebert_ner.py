@@ -13,7 +13,8 @@ import collections
 import os
 import pickle
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+import tensorflow as tf2
 
 
 from bluebert.conlleval import evaluate, report_notprint
@@ -22,7 +23,7 @@ from bert import optimization
 from bert import tokenization
 from bluebert import tf_metrics
 
-flags = tf.compat.v1.flags
+flags = tf.flags
 
 FLAGS = flags.FLAGS
 
@@ -283,7 +284,7 @@ class CLEFEProcessor(DataProcessor):
 
     @classmethod
     def _read_data2(cls, input_file):
-        with tf.compat.v1.gfile.Open(input_file, "r") as f:
+        with tf.gfile.Open(input_file, "r") as f:
             lines = []
             words = []
             labels = []
@@ -312,10 +313,10 @@ class CLEFEProcessor(DataProcessor):
 def write_tokens(tokens, labels, mode):
     if mode == "test":
         path = os.path.join(FLAGS.output_dir, "token_" + mode + ".txt")
-        if tf.compat.v1.gfile.Exists(path):
-            wf = tf.compat.v1.gfile.Open(path, 'a')
+        if tf.gfile.Exists(path):
+            wf = tf.gfile.Open(path, 'a')
         else:
-            wf = tf.compat.v1.gfile.Open(path, 'w')
+            wf = tf.gfile.Open(path, 'w')
         for token, label in zip(tokens, labels):
             if token != "**NULL**":
                 wf.write(token + ' ' + str(label) + '\n')
@@ -327,8 +328,8 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
     for (i, label) in enumerate(label_list, 1):
         label_map[label] = i
     label2id_file = os.path.join(FLAGS.output_dir, 'label2id.pkl')
-    if not tf.compat.v1.gfile.Exists(label2id_file):
-        with tf.compat.v1.gfile.Open(label2id_file, 'wb') as w:
+    if not tf.gfile.Exists(label2id_file):
+        with tf.gfile.Open(label2id_file, 'wb') as w:
             pickle.dump(label_map, w)
     textlist = example.text.split(' ')
     labellist = example.label.split(' ')
@@ -450,7 +451,7 @@ def file_based_input_fn_builder(input_file, seq_length, is_training, drop_remain
         if is_training:
             d = d.repeat()
             d = d.shuffle(buffer_size=100)
-        d = d.apply(tf.contrib.data.map_and_batch(
+        d = d.apply(tf2.contrib.data.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=batch_size,
             drop_remainder=drop_remainder
@@ -547,7 +548,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         if mode == tf.estimator.ModeKeys.TRAIN:
             train_op = optimization.create_optimizer(
                 total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
-            output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+            output_spec = tf2.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 loss=total_loss,
                 train_op=train_op,
@@ -570,13 +571,13 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
 
             eval_metrics = (metric_fn, [per_example_loss, label_ids, logits])
             # eval_metrics = (metric_fn, [label_ids, logits])
-            output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+            output_spec = tf2.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 loss=total_loss,
                 eval_metrics=eval_metrics,
                 scaffold_fn=scaffold_fn)
         else:
-            output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+            output_spec = tf2.contrib.tpu.TPUEstimatorSpec(
                 mode=mode, predictions=predicts, scaffold_fn=scaffold_fn
             )
         return output_spec
@@ -679,17 +680,17 @@ def main(_):
         vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
     tpu_cluster_resolver = None
     if FLAGS.use_tpu and FLAGS.tpu_name:
-        tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
+        tpu_cluster_resolver = tf2.contrib.cluster_resolver.TPUClusterResolver(
             FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-    is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
+    is_per_host = tf2.contrib.tpu.InputPipelineConfig.PER_HOST_V2
 
-    run_config = tf.contrib.tpu.RunConfig(
+    run_config = tf2.contrib.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=FLAGS.master,
         model_dir=FLAGS.output_dir,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-        tpu_config=tf.contrib.tpu.TPUConfig(
+        tpu_config=tf2.contrib.tpu.TPUConfig(
             iterations_per_loop=FLAGS.iterations_per_loop,
             num_shards=FLAGS.num_tpu_cores,
             per_host_input_for_training=is_per_host))
@@ -714,7 +715,7 @@ def main(_):
         use_tpu=FLAGS.use_tpu,
         use_one_hot_embeddings=FLAGS.use_tpu)
 
-    estimator = tf.contrib.tpu.TPUEstimator(
+    estimator = tf2.contrib.tpu.TPUEstimator(
         use_tpu=FLAGS.use_tpu,
         model_fn=model_fn,
         config=run_config,
@@ -826,4 +827,4 @@ if __name__ == "__main__":
     flags.mark_flag_as_required("vocab_file")
     flags.mark_flag_as_required("bert_config_file")
     flags.mark_flag_as_required("output_dir")
-    tf.compat.v1.app.run()
+    tf.app.run()
