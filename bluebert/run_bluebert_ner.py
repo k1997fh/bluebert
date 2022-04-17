@@ -13,7 +13,7 @@ import collections
 import os
 import pickle
 
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 
 from bluebert.conlleval import evaluate, report_notprint
@@ -22,7 +22,7 @@ from bert import optimization
 from bert import tokenization
 from bluebert import tf_metrics
 
-flags = tf.flags
+flags = tf.compat.v1.flags
 
 FLAGS = flags.FLAGS
 
@@ -283,7 +283,7 @@ class CLEFEProcessor(DataProcessor):
 
     @classmethod
     def _read_data2(cls, input_file):
-        with tf.gfile.Open(input_file, "r") as f:
+        with tf.compat.v1.gfile.Open(input_file, "r") as f:
             lines = []
             words = []
             labels = []
@@ -312,10 +312,10 @@ class CLEFEProcessor(DataProcessor):
 def write_tokens(tokens, labels, mode):
     if mode == "test":
         path = os.path.join(FLAGS.output_dir, "token_" + mode + ".txt")
-        if tf.gfile.Exists(path):
-            wf = tf.gfile.Open(path, 'a')
+        if tf.compat.v1.gfile.Exists(path):
+            wf = tf.compat.v1.gfile.Open(path, 'a')
         else:
-            wf = tf.gfile.Open(path, 'w')
+            wf = tf.compat.v1.gfile.Open(path, 'w')
         for token, label in zip(tokens, labels):
             if token != "**NULL**":
                 wf.write(token + ' ' + str(label) + '\n')
@@ -327,8 +327,8 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
     for (i, label) in enumerate(label_list, 1):
         label_map[label] = i
     label2id_file = os.path.join(FLAGS.output_dir, 'label2id.pkl')
-    if not tf.gfile.Exists(label2id_file):
-        with tf.gfile.Open(label2id_file, 'wb') as w:
+    if not tf.compat.v1.gfile.Exists(label2id_file):
+        with tf.compat.v1.gfile.Open(label2id_file, 'wb') as w:
             pickle.dump(label_map, w)
     textlist = example.text.split(' ')
     labellist = example.label.split(' ')
